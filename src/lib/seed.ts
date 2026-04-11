@@ -72,15 +72,18 @@ const MILESTONE_SEED = [
   { name: 'NMN 선세럼', category: '선케어', done: [] },
 ];
 
-/** Auto-seed only when DB is empty (first visit) */
+/** Auto-seed: tasks and milestones are seeded independently */
 export async function seedData() {
-  const existingCount = await db.tasks.count();
-  if (existingCount > 0) return false;
+  let seeded = false;
 
-  // Seed tasks
-  await db.tasks.bulkAdd(buildTasks(SEED_TASKS));
+  // Seed tasks (only if empty)
+  const taskCount = await db.tasks.count();
+  if (taskCount === 0) {
+    await db.tasks.bulkAdd(buildTasks(SEED_TASKS));
+    seeded = true;
+  }
 
-  // Seed milestones
+  // Seed milestones (only if empty, independent of tasks)
   const milestoneCount = await db.milestones.count();
   if (milestoneCount === 0) {
     const now = new Date().toISOString();
@@ -98,9 +101,10 @@ export async function seedData() {
         updatedAt: now,
       });
     }
+    seeded = true;
   }
 
-  return true;
+  return seeded;
 }
 
 /** Force load seed data (clears existing tasks first) */

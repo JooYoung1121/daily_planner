@@ -57,11 +57,49 @@ function buildTasks(seedTasks: SeedTask[]): Task[] {
   }));
 }
 
+const MILESTONE_STAGES = ['컨셉보드&교육', '연출컷 서칭', '연출컷 기획안', '문안 작성', '내부 QC', '디자인팀 전달'];
+
+const MILESTONE_SEED = [
+  { name: '인테카 포맨 톤 커버 선 로션', category: '선케어', done: ['컨셉보드&교육', '연출컷 서칭'] },
+  { name: '이온 스플래쉬 미스트', category: '스킨케어', done: ['컨셉보드&교육', '연출컷 서칭', '연출컷 기획안', '문안 작성'] },
+  { name: '이온 스플래쉬 크림', category: '스킨케어', done: ['컨셉보드&교육'] },
+  { name: '에브리데이 샷 퍼밍 마스크', category: '마스크팩', done: [] },
+  { name: '에브리데이 샷 카밍 마스크', category: '마스크팩', done: [] },
+  { name: '에브리데이 샷 브라이트닝 마스크', category: '마스크팩', done: [] },
+  { name: '노세범선크림플러스', category: '선케어', done: [] },
+  { name: 'PDRN 버블 클렌저', category: '클렌징', done: [] },
+  { name: 'PDRN 선세럼', category: '선케어', done: [] },
+  { name: 'NMN 선세럼', category: '선케어', done: [] },
+];
+
 /** Auto-seed only when DB is empty (first visit) */
 export async function seedData() {
   const existingCount = await db.tasks.count();
   if (existingCount > 0) return false;
+
+  // Seed tasks
   await db.tasks.bulkAdd(buildTasks(SEED_TASKS));
+
+  // Seed milestones
+  const milestoneCount = await db.milestones.count();
+  if (milestoneCount === 0) {
+    const now = new Date().toISOString();
+    for (const m of MILESTONE_SEED) {
+      await db.milestones.add({
+        id: crypto.randomUUID(),
+        name: m.name,
+        category: m.category,
+        stages: MILESTONE_STAGES.map((name) => ({
+          id: crypto.randomUUID(),
+          name,
+          done: m.done.includes(name),
+        })),
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+
   return true;
 }
 

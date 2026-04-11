@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { useTheme } from '@/hooks/useTheme';
 import { useTaskStore } from '@/stores/taskStore';
 import { useDailyLogStore } from '@/stores/dailyLogStore';
+import { useMilestoneStore } from '@/stores/milestoneStore';
 import { seedData } from '@/lib/seed';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DashboardPage } from '@/components/dashboard/DashboardPage';
@@ -21,15 +22,15 @@ export default function App() {
 
   const loadTasks = useTaskStore((s) => s.loadTasks);
   const loadEntries = useDailyLogStore((s) => s.loadEntries);
+  const loadMilestones = useMilestoneStore((s) => s.loadMilestones);
 
   useEffect(() => {
     (async () => {
       const seeded = await seedData();
-      await loadTasks();
-      await loadEntries();
+      await Promise.all([loadTasks(), loadEntries(), loadMilestones()]);
       if (seeded) console.log('Seed data loaded');
     })();
-  }, [loadTasks, loadEntries]);
+  }, [loadTasks, loadEntries, loadMilestones]);
 
   return (
     <Routes>

@@ -88,6 +88,7 @@ export async function seedData() {
   if (milestoneCount === 0) {
     const now = new Date().toISOString();
     for (const m of MILESTONE_SEED) {
+      const doneCount = m.done.length;
       await db.milestones.add({
         id: crypto.randomUUID(),
         name: m.name,
@@ -95,8 +96,10 @@ export async function seedData() {
         stages: MILESTONE_STAGES.map((name) => ({
           id: crypto.randomUUID(),
           name,
+          description: '',
           done: m.done.includes(name),
         })),
+        currentStageIndex: doneCount,
         createdAt: now,
         updatedAt: now,
       });

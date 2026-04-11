@@ -29,7 +29,7 @@ export function DailyLogPage() {
 
   const entry = getEntryByDate(currentDate);
   const dayTasks = tasks.filter((t) => t.dueDate === currentDate);
-  const completedTasks = dayTasks.filter((t) => t.status === 'done');
+  const completedTasks = dayTasks.filter((t) => t.status === 'closed');
 
   // Load entry when date changes
   useEffect(() => {

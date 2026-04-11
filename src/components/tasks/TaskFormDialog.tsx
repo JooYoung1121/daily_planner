@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { X, ChevronDown, Plus } from 'lucide-react';
-import type { Task, TaskStatus, TaskPriority } from '@/types/task';
-import { STATUS_LABELS, PRIORITY_LABELS } from '@/lib/constants';
+import type { Task, TaskStatus, TaskPriority, Recurrence, RecurrenceType } from '@/types/task';
+import { STATUS_LABELS, PRIORITY_LABELS, RECURRENCE_LABELS } from '@/lib/constants';
 import { useSettingsStore, type CategoryItem } from '@/stores/settingsStore';
 import { useTaskStore } from '@/stores/taskStore';
 import { cn } from '@/lib/utils';
@@ -24,17 +24,21 @@ export interface TaskFormData {
   tags: string[];
   dueDate: string | null;
   dueTime: string | null;
+  recurrence: Recurrence | null;
+  parentId: string | null;
 }
 
 const INITIAL: TaskFormData = {
   title: '',
   description: '',
-  status: 'todo',
+  status: 'open',
   priority: 'medium',
   category: '',
   tags: [],
   dueDate: null,
   dueTime: null,
+  recurrence: null,
+  parentId: null,
 };
 
 export function TaskFormDialog({
@@ -75,12 +79,14 @@ export function TaskFormDialog({
         tags: [...task.tags],
         dueDate: task.dueDate,
         dueTime: task.dueTime,
+        recurrence: task.recurrence ?? null,
+        parentId: task.parentId ?? null,
       });
     } else {
       setForm({
         ...INITIAL,
         dueDate: defaultDate ?? null,
-        status: defaultStatus ?? 'todo',
+        status: defaultStatus ?? 'open',
       });
     }
     setTagInput('');
@@ -443,6 +449,59 @@ export function TaskFormDialog({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Recurrence */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-foreground">
+              반복
+            </label>
+            <div className="flex items-center gap-2">
+              <select
+                value={form.recurrence?.type ?? ''}
+                onChange={(e) => {
+                  if (!e.target.value) {
+                    setForm((f) => ({ ...f, recurrence: null }));
+                  } else {
+                    setForm((f) => ({
+                      ...f,
+                      recurrence: {
+                        type: e.target.value as RecurrenceType,
+                        interval: f.recurrence?.interval ?? 1,
+                      },
+                    }));
+                  }
+                }}
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">반복 없음</option>
+                {Object.entries(RECURRENCE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              {form.recurrence && (
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={form.recurrence.interval}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        recurrence: f.recurrence
+                          ? { ...f.recurrence, interval: parseInt(e.target.value) || 1 }
+                          : null,
+                      }))
+                    }
+                    className="w-14 rounded-md border border-input bg-background px-2 py-1 text-center text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  <span>
+                    {form.recurrence.type === 'daily' ? '일' : form.recurrence.type === 'weekly' ? '주' : '월'}마다
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Submit */}

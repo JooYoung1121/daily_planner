@@ -16,9 +16,9 @@ import { format, subDays, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 const STATUS_COLORS_CHART = {
-  todo: '#94a3b8',
+  open: '#94a3b8',
   'in-progress': '#3b82f6',
-  done: '#22c55e',
+  closed: '#22c55e',
 };
 
 const PRIORITY_COLORS_CHART = {
@@ -31,12 +31,12 @@ export function StatsPage() {
   const tasks = useTaskStore((s) => s.tasks);
 
   const statusData = useMemo(() => {
-    const counts = { todo: 0, 'in-progress': 0, done: 0 };
-    tasks.forEach((t) => counts[t.status]++);
+    const counts = { open: 0, 'in-progress': 0, closed: 0 };
+    tasks.forEach((t) => { if (counts[t.status] !== undefined) counts[t.status]++; });
     return [
-      { name: '할 일', value: counts.todo, color: STATUS_COLORS_CHART.todo },
-      { name: '진행 중', value: counts['in-progress'], color: STATUS_COLORS_CHART['in-progress'] },
-      { name: '완료', value: counts.done, color: STATUS_COLORS_CHART.done },
+      { name: 'Open', value: counts.open, color: STATUS_COLORS_CHART.open },
+      { name: 'In Progress', value: counts['in-progress'], color: STATUS_COLORS_CHART['in-progress'] },
+      { name: 'Closed', value: counts.closed, color: STATUS_COLORS_CHART.closed },
     ];
   }, [tasks]);
 
@@ -67,7 +67,7 @@ export function StatsPage() {
 
   const completionRate = useMemo(() => {
     if (tasks.length === 0) return 0;
-    return Math.round((tasks.filter((t) => t.status === 'done').length / tasks.length) * 100);
+    return Math.round((tasks.filter((t) => t.status === 'closed').length / tasks.length) * 100);
   }, [tasks]);
 
   const categoryData = useMemo(() => {

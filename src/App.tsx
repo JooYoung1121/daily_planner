@@ -5,6 +5,7 @@ import { useTaskStore } from '@/stores/taskStore';
 import { useDailyLogStore } from '@/stores/dailyLogStore';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DashboardPage } from '@/components/dashboard/DashboardPage';
+import { TodayPage } from '@/components/today/TodayPage';
 import { CalendarPage } from '@/components/calendar/CalendarPage';
 import { KanbanPage } from '@/components/kanban/KanbanPage';
 import { DailyLogPage } from '@/components/daily-log/DailyLogPage';
@@ -26,6 +27,7 @@ export default function App() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/today" element={<TodayPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/kanban" element={<KanbanPage />} />
         <Route path="/daily-log" element={<DailyLogPage />} />

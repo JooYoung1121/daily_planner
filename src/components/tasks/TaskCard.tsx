@@ -25,7 +25,7 @@ export function TaskCard({ task, onEdit, onDelete, onClick, compact, className }
       onClick={() => onClick?.(task)}
       className={cn(
         'group rounded-lg border border-border bg-card p-3 shadow-sm transition-all hover:shadow-md',
-        task.status === 'done' && 'opacity-60',
+        task.status === 'closed' && 'opacity-60',
         onClick && 'cursor-pointer hover:border-primary/30',
         className,
       )}
@@ -34,7 +34,7 @@ export function TaskCard({ task, onEdit, onDelete, onClick, compact, className }
         <h4
           className={cn(
             'text-sm font-medium text-card-foreground',
-            task.status === 'done' && 'line-through',
+            task.status === 'closed' && 'line-through',
           )}
         >
           {task.title}

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db } from '@/db/database';
-import type { Task, TaskStatus, TaskPriority } from '@/types/task';
+import { addDays, addWeeks, addMonths, format } from 'date-fns';
+import type { Task, TaskStatus, TaskPriority, SubTask, ScheduleItem } from '@/types/task';
 
 interface TaskFilters {
   status?: TaskStatus;
@@ -11,6 +12,7 @@ interface TaskFilters {
 
 interface TaskStore {
   tasks: Task[];
+  scheduleItems: ScheduleItem[];
   isLoading: boolean;
   filters: TaskFilters;
 
@@ -24,10 +26,28 @@ interface TaskStore {
   getFilteredTasks: () => Task[];
   getTasksByStatus: (status: TaskStatus) => Task[];
   getTasksByDate: (date: string) => Task[];
+  getTopLevelTasks: () => Task[];
+  getChildTasks: (parentId: string) => Task[];
+
+  // Subtasks (checklist style)
+  addSubtask: (taskId: string, title: string) => Promise<void>;
+  toggleSubtask: (taskId: string, subtaskId: string) => Promise<void>;
+  deleteSubtask: (taskId: string, subtaskId: string) => Promise<void>;
+
+  // Recurrence
+  completeAndRecur: (id: string) => Promise<void>;
+
+  // Schedule
+  loadSchedule: (date: string) => Promise<void>;
+  addScheduleItem: (item: Omit<ScheduleItem, 'id'>) => Promise<void>;
+  updateScheduleItem: (id: string, updates: Partial<ScheduleItem>) => Promise<void>;
+  deleteScheduleItem: (id: string) => Promise<void>;
+  toggleScheduleItem: (id: string) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskStore>()((set, get) => ({
   tasks: [],
+  scheduleItems: [],
   isLoading: false,
   filters: {},
 
@@ -63,8 +83,8 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
     const finalUpdates = {
       ...updates,
       updatedAt: now,
-      ...(updates.status === 'done' ? { completedAt: now } : {}),
-      ...(updates.status && updates.status !== 'done' ? { completedAt: null } : {}),
+      ...(updates.status === 'closed' ? { completedAt: now } : {}),
+      ...(updates.status && updates.status !== 'closed' ? { completedAt: null } : {}),
     };
 
     await db.tasks.update(id, finalUpdates);
@@ -74,8 +94,15 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
   },
 
   deleteTask: async (id) => {
+    // Also delete child tasks
+    const children = get().tasks.filter((t) => t.parentId === id);
+    for (const child of children) {
+      await db.tasks.delete(child.id);
+    }
     await db.tasks.delete(id);
-    set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }));
+    set((s) => ({
+      tasks: s.tasks.filter((t) => t.id !== id && t.parentId !== id),
+    }));
   },
 
   reorderTasks: async (_status, orderedIds) => {
@@ -83,11 +110,9 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       key: id,
       changes: { sortOrder: (index + 1) * 1000, updatedAt: new Date().toISOString() },
     }));
-
     await Promise.all(
       updates.map(({ key, changes }) => db.tasks.update(key, changes)),
     );
-
     set((s) => ({
       tasks: s.tasks.map((t) => {
         const update = updates.find((u) => u.key === t.id);
@@ -98,34 +123,141 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
 
   setFilters: (filters) =>
     set((s) => ({ filters: { ...s.filters, ...filters } })),
-
   clearFilters: () => set({ filters: {} }),
 
   getFilteredTasks: () => {
     const { tasks, filters } = get();
     return tasks.filter((t) => {
+      if (t.parentId) return false; // hide child tasks from main list
       if (filters.status && t.status !== filters.status) return false;
       if (filters.priority && t.priority !== filters.priority) return false;
       if (filters.category && t.category !== filters.category) return false;
       if (filters.search) {
         const q = filters.search.toLowerCase();
-        if (
-          !t.title.toLowerCase().includes(q) &&
-          !t.description.toLowerCase().includes(q)
-        )
-          return false;
+        if (!t.title.toLowerCase().includes(q) && !t.description.toLowerCase().includes(q)) return false;
       }
       return true;
     });
   },
 
-  getTasksByStatus: (status) => {
-    return get()
-      .tasks.filter((t) => t.status === status)
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+  getTasksByStatus: (status) =>
+    get().tasks.filter((t) => t.status === status && !t.parentId).sort((a, b) => a.sortOrder - b.sortOrder),
+
+  getTasksByDate: (date) =>
+    get().tasks.filter((t) => t.dueDate === date),
+
+  getTopLevelTasks: () =>
+    get().tasks.filter((t) => !t.parentId),
+
+  getChildTasks: (parentId) =>
+    get().tasks.filter((t) => t.parentId === parentId).sort((a, b) => a.sortOrder - b.sortOrder),
+
+  // Subtasks (inline checklist)
+  addSubtask: async (taskId, title) => {
+    const task = get().tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const subtask: SubTask = { id: crypto.randomUUID(), title, done: false };
+    const subtasks = [...task.subtasks, subtask];
+    await db.tasks.update(taskId, { subtasks, updatedAt: new Date().toISOString() });
+    set((s) => ({
+      tasks: s.tasks.map((t) => t.id === taskId ? { ...t, subtasks } : t),
+    }));
   },
 
-  getTasksByDate: (date) => {
-    return get().tasks.filter((t) => t.dueDate === date);
+  toggleSubtask: async (taskId, subtaskId) => {
+    const task = get().tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const subtasks = task.subtasks.map((st) =>
+      st.id === subtaskId ? { ...st, done: !st.done } : st,
+    );
+    await db.tasks.update(taskId, { subtasks, updatedAt: new Date().toISOString() });
+    set((s) => ({
+      tasks: s.tasks.map((t) => t.id === taskId ? { ...t, subtasks } : t),
+    }));
+  },
+
+  deleteSubtask: async (taskId, subtaskId) => {
+    const task = get().tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const subtasks = task.subtasks.filter((st) => st.id !== subtaskId);
+    await db.tasks.update(taskId, { subtasks, updatedAt: new Date().toISOString() });
+    set((s) => ({
+      tasks: s.tasks.map((t) => t.id === taskId ? { ...t, subtasks } : t),
+    }));
+  },
+
+  // Complete task and create next occurrence if recurring
+  completeAndRecur: async (id) => {
+    const task = get().tasks.find((t) => t.id === id);
+    if (!task) return;
+
+    // Close current
+    await get().updateTask(id, { status: 'closed' });
+
+    // Create next if recurring
+    if (task.recurrence && task.dueDate) {
+      const { type, interval, endDate } = task.recurrence;
+      const current = new Date(task.dueDate);
+      let nextDate: Date;
+      if (type === 'daily') nextDate = addDays(current, interval);
+      else if (type === 'weekly') nextDate = addWeeks(current, interval);
+      else nextDate = addMonths(current, interval);
+
+      const nextDateStr = format(nextDate, 'yyyy-MM-dd');
+      if (!endDate || nextDateStr <= endDate) {
+        await get().addTask({
+          title: task.title,
+          description: task.description,
+          status: 'open',
+          priority: task.priority,
+          category: task.category,
+          tags: task.tags,
+          dueDate: nextDateStr,
+          dueTime: task.dueTime,
+          parentId: null,
+          subtasks: task.subtasks.map((st) => ({ ...st, done: false })),
+          recurrence: task.recurrence,
+          recurrenceSourceId: task.recurrenceSourceId ?? task.id,
+        });
+      }
+    }
+  },
+
+  // Schedule items
+  loadSchedule: async (date) => {
+    const items = await db.scheduleItems.where('date').equals(date).sortBy('time');
+    set({ scheduleItems: items });
+  },
+
+  addScheduleItem: async (itemData) => {
+    const item: ScheduleItem = { ...itemData, id: crypto.randomUUID() };
+    await db.scheduleItems.add(item);
+    set((s) => ({
+      scheduleItems: [...s.scheduleItems, item].sort((a, b) => a.time.localeCompare(b.time)),
+    }));
+  },
+
+  updateScheduleItem: async (id, updates) => {
+    await db.scheduleItems.update(id, updates);
+    set((s) => ({
+      scheduleItems: s.scheduleItems
+        .map((i) => (i.id === id ? { ...i, ...updates } : i))
+        .sort((a, b) => a.time.localeCompare(b.time)),
+    }));
+  },
+
+  deleteScheduleItem: async (id) => {
+    await db.scheduleItems.delete(id);
+    set((s) => ({ scheduleItems: s.scheduleItems.filter((i) => i.id !== id) }));
+  },
+
+  toggleScheduleItem: async (id) => {
+    const item = get().scheduleItems.find((i) => i.id === id);
+    if (!item) return;
+    const done = !item.done;
+    await db.scheduleItems.update(id, { done });
+    set((s) => ({
+      scheduleItems: s.scheduleItems.map((i) => (i.id === id ? { ...i, done } : i)),
+    }));
   },
 }));

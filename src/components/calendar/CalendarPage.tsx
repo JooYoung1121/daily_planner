@@ -87,14 +87,14 @@ export function CalendarPage() {
     if (editingTask) {
       await updateTask(editingTask.id, data);
     } else {
-      await addTask(data);
+      await addTask({ ...data, parentId: null, subtasks: [], recurrence: data.recurrence ?? null, recurrenceSourceId: null });
     }
     setEditingTask(null);
   };
 
   const eventStyleGetter = (event: CalendarEvent) => {
     const task = event.resource;
-    const isDone = task.status === 'done';
+    const isDone = task.status === 'closed';
     return {
       style: {
         backgroundColor: isDone

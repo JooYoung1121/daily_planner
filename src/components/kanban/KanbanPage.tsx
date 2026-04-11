@@ -25,9 +25,9 @@ import type { Task, TaskStatus } from '@/types/task';
 import { todayString } from '@/lib/date';
 
 const COLUMNS: { id: TaskStatus; label: string }[] = [
-  { id: 'todo', label: '할 일' },
-  { id: 'in-progress', label: '진행 중' },
-  { id: 'done', label: '완료' },
+  { id: 'open', label: 'Open' },
+  { id: 'in-progress', label: 'In Progress' },
+  { id: 'closed', label: 'Closed' },
 ];
 
 export function KanbanPage() {
@@ -41,7 +41,7 @@ export function KanbanPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [defaultStatus, setDefaultStatus] = useState<TaskStatus>('todo');
+  const [defaultStatus, setDefaultStatus] = useState<TaskStatus>('open');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -125,7 +125,7 @@ export function KanbanPage() {
     if (editingTask) {
       await updateTask(editingTask.id, data);
     } else {
-      await addTask({ ...data, status: defaultStatus });
+      await addTask({ ...data, status: defaultStatus, parentId: null, subtasks: [], recurrence: data.recurrence ?? null, recurrenceSourceId: null });
     }
     setEditingTask(null);
   };

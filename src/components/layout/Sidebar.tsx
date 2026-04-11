@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { PanelLeftClose, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from '@/lib/constants';
@@ -7,6 +7,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 export function Sidebar() {
   const collapsed = useSettingsStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
+  const navigate = useNavigate();
 
   return (
     <aside
@@ -16,10 +17,24 @@ export function Sidebar() {
       )}
     >
       <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
-        {!collapsed && (
+        <button
+          onClick={() => navigate('/')}
+          className={cn('flex items-center gap-2 rounded-md hover:opacity-80 transition-opacity', collapsed && 'hidden')}
+        >
+          <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
+            <span className="text-xs font-bold text-primary-foreground">DP</span>
+          </div>
           <h1 className="text-lg font-bold text-sidebar-foreground">
             Daily Planner
           </h1>
+        </button>
+        {collapsed && (
+          <button
+            onClick={() => navigate('/')}
+            className="rounded-lg bg-primary p-1.5 hover:opacity-80 transition-opacity"
+          >
+            <span className="text-[10px] font-bold text-primary-foreground">DP</span>
+          </button>
         )}
         <button
           onClick={toggleSidebar}

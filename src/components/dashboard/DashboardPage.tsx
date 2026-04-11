@@ -265,6 +265,7 @@ export function DashboardPage() {
           onClose={() => setSelectedTask(null)}
           onEdit={handleEdit}
           onDelete={(id) => { setDeleteId(id); setSelectedTask(null); }}
+          onSelectTask={(t) => setSelectedTask(t)}
         />
       )}
 

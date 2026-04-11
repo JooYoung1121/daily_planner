@@ -185,6 +185,7 @@ export function KanbanPage() {
             onClose={() => setSelectedTask(null)}
             onEdit={(t) => { setEditingTask(t); setFormOpen(true); setSelectedTask(null); }}
             onDelete={(id) => { setDeleteId(id); setSelectedTask(null); }}
+            onSelectTask={(t) => setSelectedTask(t)}
           />
         ) : null;
       })()}

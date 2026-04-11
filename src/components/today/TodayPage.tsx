@@ -14,6 +14,7 @@ import { useTaskStore } from '@/stores/taskStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { getDay, parseISO } from 'date-fns';
 import { todayString, formatDate } from '@/lib/date';
+import { PageGuide } from '@/components/common/PageGuide';
 import { cn } from '@/lib/utils';
 
 export function TodayPage() {
@@ -108,6 +109,12 @@ export function TodayPage() {
 
   return (
     <div className="space-y-6">
+      <PageGuide pageId="today" title="오늘의 할일 사용법" tips={[
+        '시간+제목을 입력하고 추가하면 오늘의 스케줄이 됩니다. 체크박스로 완료를 기록하세요.',
+        '설정에서 "고정 루틴"을 등록하면 매일 자동으로 추가됩니다.',
+        '우측 포모도로 타이머로 집중 시간을 관리하세요. 25/15/45분 중 선택 가능합니다.',
+        '하단에 오늘 마감 업무도 자동으로 표시됩니다.',
+      ]} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">오늘의 할일</h1>

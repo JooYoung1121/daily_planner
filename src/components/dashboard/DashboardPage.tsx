@@ -19,6 +19,7 @@ import { TaskFilterBar } from '@/components/tasks/TaskFilterBar';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { todayString, formatDate } from '@/lib/date';
+import { PageGuide } from '@/components/common/PageGuide';
 import { cn } from '@/lib/utils';
 import type { Task } from '@/types/task';
 
@@ -134,6 +135,17 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <PageGuide
+        pageId="dashboard"
+        title="대시보드 사용법"
+        tips={[
+          '"새 업무" 버튼으로 업무를 생성하고, 카드를 클릭하면 상세 패널이 열립니다.',
+          '상세 패널에서 상태 변경, 하위 이슈 생성, 수정/삭제가 가능합니다.',
+          '"오늘의 할일"에 시간+제목을 입력하면 체크리스트가 됩니다. 고정 루틴은 설정에서 등록하세요.',
+          '필터로 상태/우선순위/카테고리별 업무를 빠르게 찾을 수 있습니다.',
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

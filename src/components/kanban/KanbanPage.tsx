@@ -24,6 +24,7 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import type { Task, TaskStatus } from '@/types/task';
 import { todayString } from '@/lib/date';
 import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
+import { PageGuide } from '@/components/common/PageGuide';
 
 const COLUMNS: { id: TaskStatus; label: string }[] = [
   { id: 'open', label: 'Open' },
@@ -134,6 +135,11 @@ export function KanbanPage() {
 
   return (
     <div className="space-y-6">
+      <PageGuide pageId="kanban" title="칸반 보드 사용법" tips={[
+        '카드를 드래그하여 Open → In Progress → Closed 컬럼 간 이동하면 상태가 변경됩니다.',
+        '카드를 클릭하면 상세 패널에서 하위 이슈 생성, 상태 변경 등 모든 작업이 가능합니다.',
+        '각 컬럼의 + 버튼으로 해당 상태의 업무를 바로 추가할 수 있습니다.',
+      ]} />
       <h1 className="text-2xl font-bold text-foreground">칸반 보드</h1>
 
       <DndContext

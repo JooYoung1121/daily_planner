@@ -64,6 +64,8 @@ interface SettingsStore {
   deleteRoutine: (id: string) => void;
   toggleRoutine: (id: string) => void;
   setTemplates: (templates: TemplateItem[]) => void;
+  dismissedGuides: string[];
+  setDismissedGuides: (guides: string[]) => void;
   setNavOrder: (order: string[]) => void;
   addCustomPage: (label: string, icon: string) => void;
   removeCustomPage: (id: string) => void;
@@ -81,6 +83,8 @@ export const useSettingsStore = create<SettingsStore>()(
       templates: [],
       navOrder: [],
       customPages: [],
+      dismissedGuides: [],
+      setDismissedGuides: (guides) => set({ dismissedGuides: guides }),
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),

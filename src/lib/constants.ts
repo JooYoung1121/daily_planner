@@ -8,6 +8,7 @@ import {
   Settings,
   CalendarClock,
   Milestone,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -24,6 +25,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: '캘린더', path: '/calendar', icon: Calendar },
   { label: '칸반 보드', path: '/kanban', icon: Kanban },
   { label: '마일스톤', path: '/milestone', icon: Milestone },
+  { label: '일일 보고', path: '/report', icon: ClipboardList },
   { label: '자료실', path: '/library', icon: Library },
   { label: '통계', path: '/stats', icon: BarChart3 },
   { label: '설정', path: '/settings', icon: Settings },

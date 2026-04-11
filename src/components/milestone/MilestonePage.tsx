@@ -3,6 +3,7 @@ import { Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useMilestoneStore } from '@/stores/milestoneStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { PageGuide } from '@/components/common/PageGuide';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_STAGES = [
@@ -77,6 +78,12 @@ export function MilestonePage() {
 
   return (
     <div className="space-y-6">
+      <PageGuide pageId="milestone" title="마일스톤 사용법" tips={[
+        '각 제품/프로젝트가 현재 어떤 단계에 있는지 파이프라인으로 보여줍니다.',
+        '카드를 클릭해서 펼치면 단계별 체크리스트가 나옵니다. 체크하면 다음 단계로 이동합니다.',
+        '하단 "항목별 진행률"에서 전체 진행 상황을 바 차트로 확인할 수 있습니다.',
+        '"새 마일스톤" 버튼으로 새 항목을 추가하고, 단계를 쉼표로 커스텀할 수 있습니다.',
+      ]} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

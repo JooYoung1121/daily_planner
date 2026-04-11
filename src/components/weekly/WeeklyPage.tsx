@@ -9,6 +9,7 @@ import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
 import { TaskFormDialog, type TaskFormData } from '@/components/tasks/TaskFormDialog';
 import { PriorityBadge } from '@/components/common/PriorityBadge';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { PageGuide } from '@/components/common/PageGuide';
 import { cn } from '@/lib/utils';
 import { toDateString, formatDate, getDday } from '@/lib/date';
 import type { Task } from '@/types/task';
@@ -73,6 +74,11 @@ export function WeeklyPage() {
 
   return (
     <div className="space-y-6">
+      <PageGuide pageId="weekly" title="주간 보기 사용법" tips={[
+        '날짜 셀을 클릭하면 해당 일의 업무를 팝업으로 상세히 볼 수 있습니다.',
+        '팝업에서 업무를 클릭하면 상세 패널이 열리고, + 버튼으로 해당 날짜에 업무를 추가합니다.',
+        '높은 우선순위 업무는 빨간색으로 강조됩니다. 하단에 미배정 업무도 표시됩니다.',
+      ]} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">주간 보기</h1>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, Edit2, Check, Copy, ExternalLink, ChevronDown, ChevronRight, Repeat } from 'lucide-react';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { PageGuide } from '@/components/common/PageGuide';
 import { cn } from '@/lib/utils';
 
 // Stored in localStorage via settingsStore
@@ -225,6 +226,12 @@ export function LibraryPage() {
 
   return (
     <div className="space-y-6">
+      <PageGuide pageId="library" title="자료실 사용법" tips={[
+        '자주 쓰는 메일 템플릿, 문구, 프로세스, 유용한 링크를 저장해두세요.',
+        '복사 버튼을 누르면 내용이 클립보드에 복사됩니다. 메신저에 바로 붙여넣기하세요.',
+        '프로세스 항목은 단계별로 시각화됩니다. 크리에이터 협업 프로세스 등을 정리하세요.',
+        '샘플 데이터를 로드하면 메일 문안 템플릿이 자동으로 추가됩니다.',
+      ]} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">자료실</h1>

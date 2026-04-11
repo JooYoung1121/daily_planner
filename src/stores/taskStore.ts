@@ -201,6 +201,7 @@ export const useTaskStore = create<TaskStore>()((set, get) => ({
       let nextDate: Date;
       if (type === 'daily') nextDate = addDays(current, interval);
       else if (type === 'weekly') nextDate = addWeeks(current, interval);
+      else if (type === 'weekdays') nextDate = addWeeks(current, 1); // next week same day
       else nextDate = addMonths(current, interval);
 
       const nextDateStr = format(nextDate, 'yyyy-MM-dd');

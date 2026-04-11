@@ -7,9 +7,10 @@ interface KanbanSortableCardProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onClick: (task: Task) => void;
 }
 
-export function KanbanSortableCard({ task, onEdit, onDelete }: KanbanSortableCardProps) {
+export function KanbanSortableCard({ task, onEdit, onDelete, onClick }: KanbanSortableCardProps) {
   const {
     attributes,
     listeners,
@@ -27,7 +28,7 @@ export function KanbanSortableCard({ task, onEdit, onDelete }: KanbanSortableCar
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskCard task={task} onEdit={onEdit} onDelete={onDelete} compact />
+      <TaskCard task={task} onEdit={onEdit} onDelete={onDelete} onClick={onClick} compact />
     </div>
   );
 }

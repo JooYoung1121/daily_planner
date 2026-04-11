@@ -1,11 +1,12 @@
 export type TaskStatus = 'open' | 'in-progress' | 'closed';
 export type TaskPriority = 'high' | 'medium' | 'low';
 
-export type RecurrenceType = 'daily' | 'weekly' | 'monthly';
+export type RecurrenceType = 'daily' | 'weekly' | 'weekdays' | 'monthly';
 
 export interface Recurrence {
   type: RecurrenceType;
   interval: number; // every N days/weeks/months
+  dayOfWeek?: number; // 0=Sun..6=Sat, for 'weekdays' type
   endDate?: string; // YYYY-MM-DD, optional end
 }
 

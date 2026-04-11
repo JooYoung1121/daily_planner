@@ -23,6 +23,7 @@ import { TaskFormDialog, type TaskFormData } from '@/components/tasks/TaskFormDi
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import type { Task, TaskStatus } from '@/types/task';
 import { todayString } from '@/lib/date';
+import { TaskDetailPanel } from '@/components/tasks/TaskDetailPanel';
 
 const COLUMNS: { id: TaskStatus; label: string }[] = [
   { id: 'open', label: 'Open' },
@@ -43,6 +44,7 @@ export function KanbanPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus>('open');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -158,11 +160,9 @@ export function KanbanPage() {
                   <KanbanSortableCard
                     key={task.id}
                     task={task}
-                    onEdit={(t) => {
-                      setEditingTask(t);
-                      setFormOpen(true);
-                    }}
+                    onEdit={(t) => { setEditingTask(t); setFormOpen(true); }}
                     onDelete={(id) => setDeleteId(id)}
+                    onClick={(t) => setSelectedTask(t)}
                   />
                 ))}
               </SortableContext>
@@ -176,6 +176,18 @@ export function KanbanPage() {
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {selectedTask && (() => {
+        const current = tasks.find((t) => t.id === selectedTask.id);
+        return current ? (
+          <TaskDetailPanel
+            task={current}
+            onClose={() => setSelectedTask(null)}
+            onEdit={(t) => { setEditingTask(t); setFormOpen(true); setSelectedTask(null); }}
+            onDelete={(id) => { setDeleteId(id); setSelectedTask(null); }}
+          />
+        ) : null;
+      })()}
 
       <TaskFormDialog
         open={formOpen}

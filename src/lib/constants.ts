@@ -56,5 +56,8 @@ export const PRIORITY_COLORS: Record<string, string> = {
 export const RECURRENCE_LABELS: Record<string, string> = {
   daily: '매일',
   weekly: '매주',
+  weekdays: '매주 요일 지정',
   monthly: '매월',
 };
+
+export const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];

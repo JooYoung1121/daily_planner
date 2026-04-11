@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { X, ChevronDown, Plus } from 'lucide-react';
 import type { Task, TaskStatus, TaskPriority, Recurrence, RecurrenceType } from '@/types/task';
-import { STATUS_LABELS, PRIORITY_LABELS, RECURRENCE_LABELS } from '@/lib/constants';
+import { STATUS_LABELS, PRIORITY_LABELS, RECURRENCE_LABELS, DAY_LABELS } from '@/lib/constants';
 import { useSettingsStore, type CategoryItem } from '@/stores/settingsStore';
 import { useTaskStore } from '@/stores/taskStore';
 import { cn } from '@/lib/utils';
@@ -479,7 +479,7 @@ export function TaskFormDialog({
                   <option key={value} value={value}>{label}</option>
                 ))}
               </select>
-              {form.recurrence && (
+              {form.recurrence && form.recurrence.type !== 'weekdays' && (
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <input
                     type="number"
@@ -499,6 +499,32 @@ export function TaskFormDialog({
                   <span>
                     {form.recurrence.type === 'daily' ? '일' : form.recurrence.type === 'weekly' ? '주' : '월'}마다
                   </span>
+                </div>
+              )}
+              {form.recurrence?.type === 'weekdays' && (
+                <div className="flex items-center gap-1">
+                  {DAY_LABELS.map((d, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() =>
+                        setForm((f) => ({
+                          ...f,
+                          recurrence: f.recurrence
+                            ? { ...f.recurrence, dayOfWeek: i, interval: 1 }
+                            : null,
+                        }))
+                      }
+                      className={cn(
+                        'w-7 h-7 rounded-full text-xs font-medium border transition-colors',
+                        form.recurrence?.dayOfWeek === i
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border text-muted-foreground hover:bg-accent',
+                      )}
+                    >
+                      {d}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>

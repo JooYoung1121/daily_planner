@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useTaskStore } from '@/stores/taskStore';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { getDay, parseISO } from 'date-fns';
 import { TaskCard } from '@/components/tasks/TaskCard';
 import { TaskFormDialog, type TaskFormData } from '@/components/tasks/TaskFormDialog';
 import { TaskFilterBar } from '@/components/tasks/TaskFilterBar';
@@ -44,6 +45,7 @@ export function DashboardPage() {
   const deleteScheduleItem = useTaskStore((s) => s.deleteScheduleItem);
 
   const categories = useSettingsStore((s) => s.categories);
+  const routines = useSettingsStore((s) => s.routines);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -55,9 +57,33 @@ export function DashboardPage() {
 
   const today = todayString();
 
+  // Load schedule & auto-populate routines for today
   useEffect(() => {
-    loadSchedule(today);
-  }, [today, loadSchedule]);
+    (async () => {
+      await loadSchedule(today);
+      // Check if routines already applied today
+      const currentItems = useTaskStore.getState().scheduleItems;
+      const todayDow = getDay(parseISO(today)); // 0=Sun
+      const activeRoutines = routines.filter(
+        (r) => r.enabled && (r.days.length === 0 || r.days.includes(todayDow)),
+      );
+      // Only add routines not yet present (match by time+title)
+      for (const routine of activeRoutines) {
+        const exists = currentItems.some(
+          (i) => i.time === routine.time && i.title === routine.title,
+        );
+        if (!exists) {
+          await addScheduleItem({
+            time: routine.time,
+            title: routine.title,
+            done: false,
+            taskId: null,
+            date: today,
+          });
+        }
+      }
+    })();
+  }, [today, loadSchedule, routines, addScheduleItem]);
 
   const stats = useMemo(() => {
     const topLevel = tasks.filter((t) => !t.parentId);

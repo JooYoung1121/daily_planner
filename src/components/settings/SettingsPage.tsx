@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Download, Upload, Trash2, Moon, Sun, Monitor, Plus, Edit2, X, Check } from 'lucide-react';
+import { Download, Upload, Trash2, Moon, Sun, Monitor, Plus, Edit2, X, Check, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useSettingsStore, type CategoryItem } from '@/stores/settingsStore';
 import { useTaskStore } from '@/stores/taskStore';
 import { useDailyLogStore } from '@/stores/dailyLogStore';
@@ -26,6 +26,10 @@ export function SettingsPage() {
   const addCategory = useSettingsStore((s) => s.addCategory);
   const updateCategory = useSettingsStore((s) => s.updateCategory);
   const deleteCategory = useSettingsStore((s) => s.deleteCategory);
+  const routines = useSettingsStore((s) => s.routines);
+  const addRoutine = useSettingsStore((s) => s.addRoutine);
+  const deleteRoutine = useSettingsStore((s) => s.deleteRoutine);
+  const toggleRoutine = useSettingsStore((s) => s.toggleRoutine);
   const loadTasks = useTaskStore((s) => s.loadTasks);
   const loadEntries = useDailyLogStore((s) => s.loadEntries);
 
@@ -37,6 +41,12 @@ export function SettingsPage() {
   // Category management state
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('#3b82f6');
+  // Routine management state
+  const [newRoutineTime, setNewRoutineTime] = useState('09:00');
+  const [newRoutineTitle, setNewRoutineTitle] = useState('');
+  const [newRoutineDays, setNewRoutineDays] = useState<number[]>([]);
+  const [deleteRoutineId, setDeleteRoutineId] = useState<string | null>(null);
+
   const [editingCat, setEditingCat] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
@@ -236,6 +246,104 @@ export function SettingsPage() {
         </div>
       </section>
 
+      {/* Routine Management */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">고정 루틴</h2>
+        <p className="text-sm text-muted-foreground">
+          매일 반복되는 할일을 등록하면 오늘의 할일에 자동으로 추가됩니다.
+        </p>
+
+        {/* Existing routines */}
+        {routines.length > 0 && (
+          <div className="space-y-2">
+            {routines.map((routine) => (
+              <div key={routine.id} className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-2.5">
+                <button onClick={() => toggleRoutine(routine.id)} className="shrink-0" title={routine.enabled ? '비활성화' : '활성화'}>
+                  {routine.enabled
+                    ? <ToggleRight size={20} className="text-green-500" />
+                    : <ToggleLeft size={20} className="text-muted-foreground" />}
+                </button>
+                <span className="text-sm font-mono text-muted-foreground w-14 shrink-0">{routine.time}</span>
+                <div className="flex-1 min-w-0">
+                  <span className={cn('text-sm font-medium', !routine.enabled && 'text-muted-foreground')}>{routine.title}</span>
+                  {routine.days.length > 0 && (
+                    <div className="flex gap-1 mt-0.5">
+                      {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
+                        <span key={i} className={cn('text-[10px] w-4 text-center', routine.days.includes(i) ? 'text-primary font-bold' : 'text-muted-foreground/30')}>{d}</span>
+                      ))}
+                    </div>
+                  )}
+                  {routine.days.length === 0 && (
+                    <span className="text-[10px] text-muted-foreground">매일</span>
+                  )}
+                </div>
+                <button onClick={() => setDeleteRoutineId(routine.id)} className="rounded-md p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add new routine */}
+        <div className="space-y-2 rounded-lg border border-dashed border-border p-3">
+          <div className="flex gap-2">
+            <input
+              type="time"
+              value={newRoutineTime}
+              onChange={(e) => setNewRoutineTime(e.target.value)}
+              className="w-28 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <input
+              type="text"
+              value={newRoutineTitle}
+              onChange={(e) => setNewRoutineTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newRoutineTitle.trim()) {
+                  addRoutine(newRoutineTime, newRoutineTitle.trim(), newRoutineDays);
+                  setNewRoutineTitle('');
+                  setNewRoutineDays([]);
+                }
+              }}
+              placeholder="루틴 이름 (예: 스탠드업 미팅)"
+              className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground shrink-0">요일:</span>
+            {['일', '월', '화', '수', '목', '금', '토'].map((d, i) => (
+              <button
+                key={i}
+                onClick={() => setNewRoutineDays((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i])}
+                className={cn(
+                  'w-7 h-7 rounded-full text-xs font-medium border transition-colors',
+                  newRoutineDays.includes(i)
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border text-muted-foreground hover:bg-accent',
+                )}
+              >
+                {d}
+              </button>
+            ))}
+            <span className="text-[10px] text-muted-foreground ml-1">미선택 = 매일</span>
+          </div>
+          <button
+            onClick={() => {
+              if (newRoutineTitle.trim()) {
+                addRoutine(newRoutineTime, newRoutineTitle.trim(), newRoutineDays);
+                setNewRoutineTitle('');
+                setNewRoutineDays([]);
+              }
+            }}
+            disabled={!newRoutineTitle.trim()}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            <Plus size={16} />
+            루틴 추가
+          </button>
+        </div>
+      </section>
+
       {/* Data Management */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">데이터 관리</h2>
@@ -285,6 +393,19 @@ export function SettingsPage() {
         }}
         title="카테고리 삭제"
         description="이 카테고리를 삭제하시겠습니까? 기존 업무의 카테고리는 유지됩니다."
+        confirmLabel="삭제"
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={!!deleteRoutineId}
+        onClose={() => setDeleteRoutineId(null)}
+        onConfirm={() => {
+          if (deleteRoutineId) deleteRoutine(deleteRoutineId);
+          setDeleteRoutineId(null);
+        }}
+        title="루틴 삭제"
+        description="이 루틴을 삭제하시겠습니까?"
         confirmLabel="삭제"
         variant="destructive"
       />

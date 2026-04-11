@@ -11,9 +11,10 @@ import {
   Timer,
 } from 'lucide-react';
 import { useTaskStore } from '@/stores/taskStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { getDay, parseISO } from 'date-fns';
 import { todayString, formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
-
 
 export function TodayPage() {
   const tasks = useTaskStore((s) => s.tasks);
@@ -22,6 +23,7 @@ export function TodayPage() {
   const addScheduleItem = useTaskStore((s) => s.addScheduleItem);
   const toggleScheduleItem = useTaskStore((s) => s.toggleScheduleItem);
   const deleteScheduleItem = useTaskStore((s) => s.deleteScheduleItem);
+  const routines = useSettingsStore((s) => s.routines);
 
   const today = todayString();
   const [newTime, setNewTime] = useState('09:00');
@@ -35,8 +37,23 @@ export function TodayPage() {
   const [pomodoroCount, setPomodoroCount] = useState(0);
 
   useEffect(() => {
-    loadSchedule(today);
-  }, [today, loadSchedule]);
+    (async () => {
+      await loadSchedule(today);
+      const currentItems = useTaskStore.getState().scheduleItems;
+      const todayDow = getDay(parseISO(today));
+      const activeRoutines = routines.filter(
+        (r) => r.enabled && (r.days.length === 0 || r.days.includes(todayDow)),
+      );
+      for (const routine of activeRoutines) {
+        const exists = currentItems.some(
+          (i) => i.time === routine.time && i.title === routine.title,
+        );
+        if (!exists) {
+          await addScheduleItem({ time: routine.time, title: routine.title, done: false, taskId: null, date: today });
+        }
+      }
+    })();
+  }, [today, loadSchedule, routines, addScheduleItem]);
 
   // Pomodoro timer
   useEffect(() => {

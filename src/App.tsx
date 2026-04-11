@@ -10,6 +10,7 @@ import { TodayPage } from '@/components/today/TodayPage';
 import { CalendarPage } from '@/components/calendar/CalendarPage';
 import { WeeklyPage } from '@/components/weekly/WeeklyPage';
 import { KanbanPage } from '@/components/kanban/KanbanPage';
+import { MilestonePage } from '@/components/milestone/MilestonePage';
 import { DailyLogPage } from '@/components/daily-log/DailyLogPage';
 import { StatsPage } from '@/components/stats/StatsPage';
 import { SettingsPage } from '@/components/settings/SettingsPage';
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/weekly" element={<WeeklyPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/kanban" element={<KanbanPage />} />
+        <Route path="/milestone" element={<MilestonePage />} />
         <Route path="/daily-log" element={<DailyLogPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/settings" element={<SettingsPage />} />

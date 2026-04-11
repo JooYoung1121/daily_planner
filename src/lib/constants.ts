@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   CalendarClock,
+  Milestone,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -22,6 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: '주간 보기', path: '/weekly', icon: CalendarDays },
   { label: '캘린더', path: '/calendar', icon: Calendar },
   { label: '칸반 보드', path: '/kanban', icon: Kanban },
+  { label: '마일스톤', path: '/milestone', icon: Milestone },
   { label: '데일리 로그', path: '/daily-log', icon: BookOpen },
   { label: '통계', path: '/stats', icon: BarChart3 },
   { label: '설정', path: '/settings', icon: Settings },

@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { X, ChevronDown, Plus } from 'lucide-react';
 import type { Task, TaskStatus, TaskPriority } from '@/types/task';
 import { STATUS_LABELS, PRIORITY_LABELS } from '@/lib/constants';
+import { useSettingsStore, type CategoryItem } from '@/stores/settingsStore';
+import { useTaskStore } from '@/stores/taskStore';
+import { cn } from '@/lib/utils';
 
 interface TaskFormDialogProps {
   open: boolean;
@@ -9,6 +12,7 @@ interface TaskFormDialogProps {
   onSubmit: (data: TaskFormData) => void;
   task?: Task | null;
   defaultDate?: string;
+  defaultStatus?: TaskStatus;
 }
 
 export interface TaskFormData {
@@ -39,9 +43,26 @@ export function TaskFormDialog({
   onSubmit,
   task,
   defaultDate,
+  defaultStatus,
 }: TaskFormDialogProps) {
   const [form, setForm] = useState<TaskFormData>(INITIAL);
   const [tagInput, setTagInput] = useState('');
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatColor, setNewCatColor] = useState('#3b82f6');
+  const [showNewCat, setShowNewCat] = useState(false);
+  const catRef = useRef<HTMLDivElement>(null);
+
+  const categories = useSettingsStore((s) => s.categories);
+  const addCategory = useSettingsStore((s) => s.addCategory);
+  const allTasks = useTaskStore((s) => s.tasks);
+
+  // Collect all existing tags from tasks for suggestions
+  const suggestedTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    allTasks.forEach((t) => t.tags.forEach((tag) => tagSet.add(tag)));
+    return Array.from(tagSet).sort();
+  }, [allTasks]);
 
   useEffect(() => {
     if (task) {
@@ -51,15 +72,32 @@ export function TaskFormDialog({
         status: task.status,
         priority: task.priority,
         category: task.category,
-        tags: task.tags,
+        tags: [...task.tags],
         dueDate: task.dueDate,
         dueTime: task.dueTime,
       });
     } else {
-      setForm({ ...INITIAL, dueDate: defaultDate ?? null });
+      setForm({
+        ...INITIAL,
+        dueDate: defaultDate ?? null,
+        status: defaultStatus ?? 'todo',
+      });
     }
     setTagInput('');
-  }, [task, defaultDate, open]);
+    setCatDropdownOpen(false);
+    setShowNewCat(false);
+  }, [task, defaultDate, defaultStatus, open]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) {
+        setCatDropdownOpen(false);
+      }
+    }
+    if (catDropdownOpen) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [catDropdownOpen]);
 
   if (!open) return null;
 
@@ -78,9 +116,35 @@ export function TaskFormDialog({
     }
   };
 
+  const toggleTag = (tag: string) => {
+    setForm((f) => ({
+      ...f,
+      tags: f.tags.includes(tag)
+        ? f.tags.filter((t) => t !== tag)
+        : [...f.tags, tag],
+    }));
+  };
+
   const removeTag = (tag: string) => {
     setForm((f) => ({ ...f, tags: f.tags.filter((t) => t !== tag) }));
   };
+
+  const selectCategory = (cat: CategoryItem) => {
+    setForm((f) => ({ ...f, category: cat.name }));
+    setCatDropdownOpen(false);
+  };
+
+  const handleAddNewCategory = () => {
+    if (newCatName.trim()) {
+      addCategory(newCatName.trim(), newCatColor);
+      setForm((f) => ({ ...f, category: newCatName.trim() }));
+      setNewCatName('');
+      setShowNewCat(false);
+      setCatDropdownOpen(false);
+    }
+  };
+
+  const selectedCat = categories.find((c) => c.name === form.category);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -99,6 +163,7 @@ export function TaskFormDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Title */}
           <div>
             <label className="mb-1 block text-sm font-medium text-foreground">
               제목 *
@@ -113,6 +178,7 @@ export function TaskFormDialog({
             />
           </div>
 
+          {/* Description */}
           <div>
             <label className="mb-1 block text-sm font-medium text-foreground">
               설명
@@ -128,6 +194,7 @@ export function TaskFormDialog({
             />
           </div>
 
+          {/* Status + Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-foreground">
@@ -141,9 +208,7 @@ export function TaskFormDialog({
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
+                  <option key={value} value={value}>{label}</option>
                 ))}
               </select>
             </div>
@@ -154,76 +219,187 @@ export function TaskFormDialog({
               <select
                 value={form.priority}
                 onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    priority: e.target.value as TaskPriority,
-                  }))
+                  setForm((f) => ({ ...f, priority: e.target.value as TaskPriority }))
                 }
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
+                  <option key={value} value={value}>{label}</option>
                 ))}
               </select>
             </div>
           </div>
 
+          {/* Due date + time */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">
-                마감일
-              </label>
+              <label className="mb-1 block text-sm font-medium text-foreground">마감일</label>
               <input
                 type="date"
                 value={form.dueDate ?? ''}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    dueDate: e.target.value || null,
-                  }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value || null }))}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">
-                마감 시간
-              </label>
+              <label className="mb-1 block text-sm font-medium text-foreground">마감 시간</label>
               <input
                 type="time"
                 value={form.dueTime ?? ''}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    dueTime: e.target.value || null,
-                  }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, dueTime: e.target.value || null }))}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
 
+          {/* Category Dropdown */}
           <div>
             <label className="mb-1 block text-sm font-medium text-foreground">
               카테고리
             </label>
-            <input
-              type="text"
-              value={form.category}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, category: e.target.value }))
-              }
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="예: 개발, 미팅, 문서"
-            />
+            <div ref={catRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setCatDropdownOpen(!catDropdownOpen)}
+                className="flex w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <span className="flex items-center gap-2">
+                  {selectedCat ? (
+                    <>
+                      <span
+                        className="inline-block h-3 w-3 rounded-full"
+                        style={{ backgroundColor: selectedCat.color }}
+                      />
+                      {selectedCat.name}
+                    </>
+                  ) : form.category ? (
+                    form.category
+                  ) : (
+                    <span className="text-muted-foreground">카테고리 선택</span>
+                  )}
+                </span>
+                <ChevronDown size={16} className={cn('text-muted-foreground transition-transform', catDropdownOpen && 'rotate-180')} />
+              </button>
+
+              {catDropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full rounded-md border border-border bg-card shadow-lg max-h-60 overflow-y-auto">
+                  {/* Clear selection */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm((f) => ({ ...f, category: '' }));
+                      setCatDropdownOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent"
+                  >
+                    선택 안함
+                  </button>
+
+                  {categories.map((cat) => (
+                    <button
+                      type="button"
+                      key={cat.id}
+                      onClick={() => selectCategory(cat)}
+                      className={cn(
+                        'flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent',
+                        form.category === cat.name && 'bg-accent font-medium',
+                      )}
+                    >
+                      <span
+                        className="inline-block h-3 w-3 rounded-full shrink-0"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      {cat.name}
+                    </button>
+                  ))}
+
+                  {/* Add new category inline */}
+                  <div className="border-t border-border">
+                    {showNewCat ? (
+                      <div className="p-2 space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="color"
+                            value={newCatColor}
+                            onChange={(e) => setNewCatColor(e.target.value)}
+                            className="h-8 w-8 cursor-pointer rounded border-0 p-0"
+                          />
+                          <input
+                            type="text"
+                            value={newCatName}
+                            onChange={(e) => setNewCatName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddNewCategory();
+                              }
+                            }}
+                            placeholder="새 카테고리 이름"
+                            className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={handleAddNewCategory}
+                            className="flex-1 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:opacity-90"
+                          >
+                            추가
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowNewCat(false)}
+                            className="flex-1 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent"
+                          >
+                            취소
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowNewCat(true)}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-primary hover:bg-accent"
+                      >
+                        <Plus size={14} />
+                        새 카테고리 추가
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
+          {/* Tags with suggestions */}
           <div>
             <label className="mb-1 block text-sm font-medium text-foreground">
               태그
             </label>
+
+            {/* Suggested tags */}
+            {suggestedTags.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1">
+                {suggestedTags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={cn(
+                      'rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
+                      form.tags.includes(tag)
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground',
+                    )}
+                  >
+                    #{tag}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Manual tag input */}
             <div className="flex gap-2">
               <input
                 type="text"
@@ -236,7 +412,7 @@ export function TaskFormDialog({
                   }
                 }}
                 className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="태그 입력 후 Enter"
+                placeholder="새 태그 입력 후 Enter"
               />
               <button
                 type="button"
@@ -246,14 +422,16 @@ export function TaskFormDialog({
                 추가
               </button>
             </div>
+
+            {/* Selected tags */}
             {form.tags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1">
                 {form.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-xs text-accent-foreground"
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 text-xs text-primary font-medium"
                   >
-                    {tag}
+                    #{tag}
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
@@ -267,6 +445,7 @@ export function TaskFormDialog({
             )}
           </div>
 
+          {/* Submit */}
           <div className="flex justify-end gap-2 pt-2">
             <button
               type="button"

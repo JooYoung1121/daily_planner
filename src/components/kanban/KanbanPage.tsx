@@ -186,6 +186,7 @@ export function KanbanPage() {
         onSubmit={handleSubmit}
         task={editingTask}
         defaultDate={todayString()}
+        defaultStatus={defaultStatus}
       />
 
       <ConfirmDialog

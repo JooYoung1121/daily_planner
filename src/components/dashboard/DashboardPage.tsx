@@ -27,7 +27,7 @@ export function DashboardPage() {
   const addTask = useTaskStore((s) => s.addTask);
   const updateTask = useTaskStore((s) => s.updateTask);
   const deleteTask = useTaskStore((s) => s.deleteTask);
-  const getFilteredTasks = useTaskStore((s) => s.getFilteredTasks);
+  const filters = useTaskStore((s) => s.filters);
 
   // Schedule (today's checklist)
   const scheduleItems = useTaskStore((s) => s.scheduleItems);
@@ -84,7 +84,19 @@ export function DashboardPage() {
     return { total, closed, inProgress, overdueCount: overdue.length };
   }, [tasks, today]);
 
-  const filteredTasks = getFilteredTasks();
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((t) => {
+      if (t.parentId) return false;
+      if (filters.status && t.status !== filters.status) return false;
+      if (filters.priority && t.priority !== filters.priority) return false;
+      if (filters.category && t.category !== filters.category) return false;
+      if (filters.search) {
+        const q = filters.search.toLowerCase();
+        if (!t.title.toLowerCase().includes(q) && !t.description.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [tasks, filters]);
 
   const currentSelected = useMemo(
     () => (selectedTask ? tasks.find((t) => t.id === selectedTask.id) ?? null : null),

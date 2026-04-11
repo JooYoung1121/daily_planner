@@ -1,11 +1,14 @@
 import { Search, X } from 'lucide-react';
 import { useTaskStore } from '@/stores/taskStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { STATUS_LABELS, PRIORITY_LABELS } from '@/lib/constants';
+import type { TaskStatus, TaskPriority } from '@/types/task';
 
 export function TaskFilterBar() {
   const filters = useTaskStore((s) => s.filters);
   const setFilters = useTaskStore((s) => s.setFilters);
   const clearFilters = useTaskStore((s) => s.clearFilters);
+  const categories = useSettingsStore((s) => s.categories);
 
   const hasFilters = Object.values(filters).some(Boolean);
 
@@ -24,7 +27,7 @@ export function TaskFilterBar() {
 
       <select
         value={filters.status ?? ''}
-        onChange={(e) => setFilters({ status: (e.target.value || undefined) as never })}
+        onChange={(e) => setFilters({ status: (e.target.value || undefined) as TaskStatus | undefined })}
         className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <option value="">모든 상태</option>
@@ -35,12 +38,23 @@ export function TaskFilterBar() {
 
       <select
         value={filters.priority ?? ''}
-        onChange={(e) => setFilters({ priority: (e.target.value || undefined) as never })}
+        onChange={(e) => setFilters({ priority: (e.target.value || undefined) as TaskPriority | undefined })}
         className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <option value="">모든 우선순위</option>
         {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
           <option key={value} value={value}>{label}</option>
+        ))}
+      </select>
+
+      <select
+        value={filters.category ?? ''}
+        onChange={(e) => setFilters({ category: e.target.value || undefined })}
+        className="rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        <option value="">모든 카테고리</option>
+        {categories.map((c) => (
+          <option key={c.id} value={c.name}>{c.name}</option>
         ))}
       </select>
 

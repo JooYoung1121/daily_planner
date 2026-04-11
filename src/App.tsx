@@ -11,7 +11,7 @@ import { CalendarPage } from '@/components/calendar/CalendarPage';
 import { WeeklyPage } from '@/components/weekly/WeeklyPage';
 import { KanbanPage } from '@/components/kanban/KanbanPage';
 import { MilestonePage } from '@/components/milestone/MilestonePage';
-import { DailyLogPage } from '@/components/daily-log/DailyLogPage';
+import { LibraryPage } from '@/components/library/LibraryPage';
 import { StatsPage } from '@/components/stats/StatsPage';
 import { SettingsPage } from '@/components/settings/SettingsPage';
 
@@ -39,7 +39,7 @@ export default function App() {
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/kanban" element={<KanbanPage />} />
         <Route path="/milestone" element={<MilestonePage />} />
-        <Route path="/daily-log" element={<DailyLogPage />} />
+        <Route path="/library" element={<LibraryPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>

@@ -142,31 +142,34 @@ export function MilestonePage() {
           </div>
           <button
             onClick={async () => {
-              const seedItems = [
-                { name: '인테카 포맨 톤 커버 선', category: '선케어', stages: DEFAULT_STAGES },
-                { name: '이온 스플래쉬 미스트', category: '스킨케어', stages: DEFAULT_STAGES },
-                { name: '이온 스플래쉬 크림', category: '스킨케어', stages: DEFAULT_STAGES },
-                { name: '에브리데이샷 마스크팩', category: '마스크팩', stages: DEFAULT_STAGES },
-                { name: '노세범선크림플러스', category: '선케어', stages: DEFAULT_STAGES },
-                { name: 'PDRN 버블 클렌저', category: '클렌징', stages: DEFAULT_STAGES },
+              // 제품관련 시트 기반 시드 데이터
+              const seedItems: { name: string; category: string; stages: string[]; done: string[] }[] = [
+                { name: '인테카 포맨 톤 커버 선 로션', category: '선케어', stages: DEFAULT_STAGES, done: ['컨셉보드&교육', '연출컷 서칭'] },
+                { name: '이온 스플래쉬 미스트', category: '스킨케어', stages: DEFAULT_STAGES, done: ['컨셉보드&교육', '연출컷 서칭', '연출컷 기획안', '문안 작성'] },
+                { name: '이온 스플래쉬 크림', category: '스킨케어', stages: DEFAULT_STAGES, done: ['컨셉보드&교육'] },
+                { name: '에브리데이 샷 퍼밍 마스크', category: '마스크팩', stages: DEFAULT_STAGES, done: [] },
+                { name: '에브리데이 샷 카밍 마스크', category: '마스크팩', stages: DEFAULT_STAGES, done: [] },
+                { name: '에브리데이 샷 브라이트닝 마스크', category: '마스크팩', stages: DEFAULT_STAGES, done: [] },
+                { name: '노세범선크림플러스', category: '선케어', stages: DEFAULT_STAGES, done: [] },
+                { name: 'PDRN 버블 클렌저', category: '클렌징', stages: DEFAULT_STAGES, done: [] },
+                { name: 'PDRN 선세럼', category: '선케어', stages: DEFAULT_STAGES, done: [] },
+                { name: 'NMN 선세럼', category: '선케어', stages: DEFAULT_STAGES, done: [] },
               ];
               for (const s of seedItems) await addMilestone(s.name, s.category, s.stages);
               const loaded = useMilestoneStore.getState().items;
-              const toggle = async (itemName: string, stageNames: string[]) => {
-                const item = loaded.find((i) => i.name === itemName);
-                if (!item) return;
-                for (const sn of stageNames) {
-                  const stage = item.stages.find((s) => s.name === sn);
+              for (const s of seedItems) {
+                if (s.done.length === 0) continue;
+                const item = loaded.find((i) => i.name === s.name);
+                if (!item) continue;
+                for (const sn of s.done) {
+                  const stage = item.stages.find((st) => st.name === sn);
                   if (stage) await toggleStage(item.id, stage.id);
                 }
-              };
-              await toggle('인테카 포맨 톤 커버 선', ['컨셉보드&교육', '연출컷 서칭']);
-              await toggle('이온 스플래쉬 미스트', ['컨셉보드&교육', '연출컷 서칭', '연출컷 기획안', '문안 작성']);
-              await toggle('이온 스플래쉬 크림', ['컨셉보드&교육']);
+              }
             }}
             className="w-full rounded-lg border border-dashed border-border py-4 text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors"
           >
-            샘플 데이터 로드 (신제품 마일스톤 6개)
+            샘플 데이터 로드 (신제품 마일스톤 10개)
           </button>
         </div>
       ) : (

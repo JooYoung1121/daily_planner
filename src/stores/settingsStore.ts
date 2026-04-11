@@ -2,6 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Theme, CalendarView } from '@/types/settings';
 
+export interface TemplateItem {
+  id: string;
+  category: string;
+  title: string;
+  content: string;
+  url?: string;
+}
+
 export interface CategoryItem {
   id: string;
   name: string;
@@ -32,6 +40,7 @@ interface SettingsStore {
   defaultCalendarView: CalendarView;
   categories: CategoryItem[];
   routines: RoutineItem[];
+  templates: TemplateItem[];
   setTheme: (theme: Theme) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -43,6 +52,7 @@ interface SettingsStore {
   updateRoutine: (id: string, updates: Partial<Omit<RoutineItem, 'id'>>) => void;
   deleteRoutine: (id: string) => void;
   toggleRoutine: (id: string) => void;
+  setTemplates: (templates: TemplateItem[]) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -53,6 +63,7 @@ export const useSettingsStore = create<SettingsStore>()(
       defaultCalendarView: 'month',
       categories: DEFAULT_CATEGORIES,
       routines: [],
+      templates: [],
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -81,6 +92,7 @@ export const useSettingsStore = create<SettingsStore>()(
         set((s) => ({
           routines: s.routines.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)),
         })),
+      setTemplates: (templates) => set({ templates }),
     }),
     { name: 'daily-planner-settings' },
   ),

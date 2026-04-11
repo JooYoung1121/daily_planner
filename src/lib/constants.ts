@@ -3,7 +3,7 @@ import {
   Calendar,
   CalendarDays,
   Kanban,
-  BookOpen,
+  Library,
   BarChart3,
   Settings,
   CalendarClock,
@@ -24,7 +24,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: '캘린더', path: '/calendar', icon: Calendar },
   { label: '칸반 보드', path: '/kanban', icon: Kanban },
   { label: '마일스톤', path: '/milestone', icon: Milestone },
-  { label: '데일리 로그', path: '/daily-log', icon: BookOpen },
+  { label: '자료실', path: '/library', icon: Library },
   { label: '통계', path: '/stats', icon: BarChart3 },
   { label: '설정', path: '/settings', icon: Settings },
 ];

@@ -50,6 +50,7 @@ interface SettingsStore {
   categories: CategoryItem[];
   routines: RoutineItem[];
   templates: TemplateItem[];
+  reportTemplate: string;
   navOrder: string[]; // ordered path list e.g. ['/', '/today', ...]
   customPages: CustomNavItem[];
   setTheme: (theme: Theme) => void;
@@ -64,6 +65,7 @@ interface SettingsStore {
   deleteRoutine: (id: string) => void;
   toggleRoutine: (id: string) => void;
   setTemplates: (templates: TemplateItem[]) => void;
+  setReportTemplate: (template: string) => void;
   dismissedGuides: string[];
   setDismissedGuides: (guides: string[]) => void;
   setNavOrder: (order: string[]) => void;
@@ -81,6 +83,7 @@ export const useSettingsStore = create<SettingsStore>()(
       categories: DEFAULT_CATEGORIES,
       routines: [],
       templates: [],
+      reportTemplate: '',
       navOrder: [],
       customPages: [],
       dismissedGuides: [],
@@ -114,6 +117,7 @@ export const useSettingsStore = create<SettingsStore>()(
           routines: s.routines.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)),
         })),
       setTemplates: (templates) => set({ templates }),
+      setReportTemplate: (reportTemplate) => set({ reportTemplate }),
       setNavOrder: (navOrder) => set({ navOrder }),
       addCustomPage: (label, icon) =>
         set((s) => {

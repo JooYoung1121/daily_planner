@@ -17,11 +17,13 @@ export interface RoutineItem {
 }
 
 const DEFAULT_CATEGORIES: CategoryItem[] = [
-  { id: '1', name: '개발', color: '#3b82f6' },
-  { id: '2', name: '미팅', color: '#8b5cf6' },
-  { id: '3', name: '문서', color: '#10b981' },
-  { id: '4', name: '리뷰', color: '#f59e0b' },
-  { id: '5', name: '기타', color: '#6b7280' },
+  { id: '1', name: '크리에이터', color: '#8b5cf6' },
+  { id: '2', name: '콘텐츠', color: '#3b82f6' },
+  { id: '3', name: 'CRM', color: '#10b981' },
+  { id: '4', name: '퍼포먼스', color: '#f59e0b' },
+  { id: '5', name: '촬영', color: '#ef4444' },
+  { id: '6', name: '바이럴', color: '#ec4899' },
+  { id: '7', name: '개인/행정', color: '#6b7280' },
 ];
 
 interface SettingsStore {

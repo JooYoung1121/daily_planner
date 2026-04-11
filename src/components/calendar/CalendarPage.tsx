@@ -138,6 +138,22 @@ export function CalendarPage() {
           messages={messages}
           culture="ko"
           eventPropGetter={eventStyleGetter}
+          components={{
+            event: ({ event }: { event: CalendarEvent }) => {
+              const t = event.resource;
+              return (
+                <div className="flex items-center gap-1 overflow-hidden">
+                  {t.priority === 'high' && <span className="shrink-0 text-[8px]">🔴</span>}
+                  <span className="truncate text-[11px] font-medium">{event.title}</span>
+                  {t.tags.length > 0 && (
+                    <span className="shrink-0 truncate text-[9px] opacity-70">
+                      #{t.tags[0]}
+                    </span>
+                  )}
+                </div>
+              );
+            },
+          }}
         />
       </div>
 

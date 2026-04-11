@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Calendar,
+  CalendarDays,
   Kanban,
   BookOpen,
   BarChart3,
@@ -18,6 +19,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: '대시보드', path: '/', icon: LayoutDashboard },
   { label: '오늘의 할일', path: '/today', icon: CalendarClock },
+  { label: '주간 보기', path: '/weekly', icon: CalendarDays },
   { label: '캘린더', path: '/calendar', icon: Calendar },
   { label: '칸반 보드', path: '/kanban', icon: Kanban },
   { label: '데일리 로그', path: '/daily-log', icon: BookOpen },

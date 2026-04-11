@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { PanelLeftClose, PanelLeft } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from '@/lib/constants';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -7,7 +8,39 @@ import { useSettingsStore } from '@/stores/settingsStore';
 export function Sidebar() {
   const collapsed = useSettingsStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useSettingsStore((s) => s.toggleSidebar);
+  const navOrder = useSettingsStore((s) => s.navOrder);
+  const customPages = useSettingsStore((s) => s.customPages);
   const navigate = useNavigate();
+
+  // Merge built-in nav items with custom pages, respecting order
+  const orderedItems = useMemo(() => {
+    const builtIn = NAV_ITEMS.map((item) => ({
+      ...item,
+      isCustom: false as const,
+    }));
+    const custom = customPages
+      .filter((p) => p.visible)
+      .map((p) => ({
+        label: p.label,
+        path: p.path,
+        icon: FileText, // default icon for custom pages
+        isCustom: true as const,
+      }));
+
+    const all = [...builtIn, ...custom];
+
+    if (navOrder.length === 0) return all;
+
+    // Sort by navOrder, unordered items go to the end
+    return all.sort((a, b) => {
+      const ai = navOrder.indexOf(a.path);
+      const bi = navOrder.indexOf(b.path);
+      if (ai === -1 && bi === -1) return 0;
+      if (ai === -1) return 1;
+      if (bi === -1) return 1;
+      return ai - bi;
+    });
+  }, [navOrder, customPages]);
 
   return (
     <aside
@@ -24,28 +57,20 @@ export function Sidebar() {
           <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-xs font-bold text-primary-foreground">DP</span>
           </div>
-          <h1 className="text-lg font-bold text-sidebar-foreground">
-            Daily Planner
-          </h1>
+          <h1 className="text-lg font-bold text-sidebar-foreground">Daily Planner</h1>
         </button>
         {collapsed && (
-          <button
-            onClick={() => navigate('/')}
-            className="rounded-lg bg-primary p-1.5 hover:opacity-80 transition-opacity"
-          >
+          <button onClick={() => navigate('/')} className="rounded-lg bg-primary p-1.5 hover:opacity-80 transition-opacity">
             <span className="text-[10px] font-bold text-primary-foreground">DP</span>
           </button>
         )}
-        <button
-          onClick={toggleSidebar}
-          className="rounded-md p-1.5 text-sidebar-foreground hover:bg-sidebar-accent"
-        >
+        <button onClick={toggleSidebar} className="rounded-md p-1.5 text-sidebar-foreground hover:bg-sidebar-accent">
           {collapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
         </button>
       </div>
 
-      <nav className="flex-1 space-y-1 p-2">
-        {NAV_ITEMS.map((item) => (
+      <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
+        {orderedItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -69,10 +94,7 @@ export function Sidebar() {
         {!collapsed && (
           <p className="text-xs text-muted-foreground">
             {new Date().toLocaleDateString('ko-KR', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              weekday: 'long',
+              year: 'numeric', month: 'long', day: 'numeric', weekday: 'long',
             })}
           </p>
         )}

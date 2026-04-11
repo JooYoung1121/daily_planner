@@ -14,6 +14,7 @@ import { MilestonePage } from '@/components/milestone/MilestonePage';
 import { LibraryPage } from '@/components/library/LibraryPage';
 import { StatsPage } from '@/components/stats/StatsPage';
 import { SettingsPage } from '@/components/settings/SettingsPage';
+import { CustomPage } from '@/components/custom/CustomPage';
 
 export default function App() {
   useTheme();
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/library" element={<LibraryPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/custom/:id" element={<CustomPage />} />
       </Route>
     </Routes>
   );

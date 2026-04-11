@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Download, Upload, Trash2, Moon, Sun, Monitor, Plus, Edit2, X, Check, ToggleLeft, ToggleRight, FileSpreadsheet, Database } from 'lucide-react';
 import { useSettingsStore, type CategoryItem } from '@/stores/settingsStore';
+import { NAV_ITEMS } from '@/lib/constants';
 import { useTaskStore } from '@/stores/taskStore';
 import { useDailyLogStore } from '@/stores/dailyLogStore';
 import { exportAllData, importAllData, clearAllData, downloadJson } from '@/lib/export';
@@ -31,6 +32,11 @@ export function SettingsPage() {
   const addRoutine = useSettingsStore((s) => s.addRoutine);
   const deleteRoutine = useSettingsStore((s) => s.deleteRoutine);
   const toggleRoutine = useSettingsStore((s) => s.toggleRoutine);
+  const navOrder = useSettingsStore((s) => s.navOrder);
+  const setNavOrder = useSettingsStore((s) => s.setNavOrder);
+  const customPages = useSettingsStore((s) => s.customPages);
+  const addCustomPage = useSettingsStore((s) => s.addCustomPage);
+  const removeCustomPage = useSettingsStore((s) => s.removeCustomPage);
   const loadTasks = useTaskStore((s) => s.loadTasks);
   const loadEntries = useDailyLogStore((s) => s.loadEntries);
 
@@ -45,6 +51,9 @@ export function SettingsPage() {
   // Category management state
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('#3b82f6');
+  // Menu customization
+  const [newPageName, setNewPageName] = useState('');
+
   // Routine management state
   const [newRoutineTime, setNewRoutineTime] = useState('09:00');
   const [newRoutineTitle, setNewRoutineTitle] = useState('');
@@ -149,6 +158,95 @@ export function SettingsPage() {
               {t.label}
             </button>
           ))}
+        </div>
+      </section>
+
+      {/* Menu Customization */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">메뉴 커스텀</h2>
+        <p className="text-sm text-muted-foreground">메뉴 순서를 드래그하거나, 나만의 메뉴를 추가할 수 있습니다.</p>
+
+        {/* Reorder buttons */}
+        <div className="space-y-1">
+          {(() => {
+            const builtInPaths = NAV_ITEMS.map((n) => n.path);
+            const customPaths = customPages.map((p) => p.path);
+            const allPaths = navOrder.length > 0 ? navOrder : [...builtInPaths, ...customPaths];
+            const allItems = allPaths.map((path) => {
+              const builtIn = NAV_ITEMS.find((n) => n.path === path);
+              if (builtIn) return { path, label: builtIn.label, isCustom: false };
+              const custom = customPages.find((p) => p.path === path);
+              if (custom) return { path, label: custom.label, isCustom: true, id: custom.id };
+              return null;
+            }).filter(Boolean) as { path: string; label: string; isCustom: boolean; id?: string }[];
+
+            // Add any missing items
+            for (const n of NAV_ITEMS) {
+              if (!allItems.some((i) => i.path === n.path)) {
+                allItems.push({ path: n.path, label: n.label, isCustom: false });
+              }
+            }
+            for (const p of customPages) {
+              if (!allItems.some((i) => i.path === p.path)) {
+                allItems.push({ path: p.path, label: p.label, isCustom: true, id: p.id });
+              }
+            }
+
+            const moveUp = (idx: number) => {
+              if (idx === 0) return;
+              const newOrder = allItems.map((i) => i.path);
+              [newOrder[idx - 1], newOrder[idx]] = [newOrder[idx], newOrder[idx - 1]];
+              setNavOrder(newOrder);
+            };
+            const moveDown = (idx: number) => {
+              if (idx >= allItems.length - 1) return;
+              const newOrder = allItems.map((i) => i.path);
+              [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
+              setNavOrder(newOrder);
+            };
+
+            return allItems.map((item, idx) => (
+              <div key={item.path} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
+                <div className="flex flex-col gap-0.5">
+                  <button onClick={() => moveUp(idx)} disabled={idx === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-20 text-[10px]">▲</button>
+                  <button onClick={() => moveDown(idx)} disabled={idx >= allItems.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-20 text-[10px]">▼</button>
+                </div>
+                <span className="flex-1 text-sm font-medium text-foreground">{item.label}</span>
+                {item.isCustom && (
+                  <button onClick={() => removeCustomPage(item.id!)} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+                {!item.isCustom && (
+                  <span className="text-[10px] text-muted-foreground">기본</span>
+                )}
+              </div>
+            ));
+          })()}
+        </div>
+
+        {/* Add custom page */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newPageName}
+            onChange={(e) => setNewPageName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newPageName.trim()) {
+                addCustomPage(newPageName.trim(), 'FileText');
+                setNewPageName('');
+              }
+            }}
+            placeholder="새 메뉴 이름 (예: 회의록, 메모)"
+            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <button
+            onClick={() => { if (newPageName.trim()) { addCustomPage(newPageName.trim(), 'FileText'); setNewPageName(''); } }}
+            disabled={!newPageName.trim()}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            <Plus size={16} /> 추가
+          </button>
         </div>
       </section>
 

@@ -56,7 +56,7 @@ export function TaskDetailPanel({ task, onClose, onEdit, onDelete, onSelectTask 
 
   const handleAddChild = async () => {
     if (!childTitle.trim()) return;
-    await addTask({
+    const newChild = await addTask({
       title: childTitle.trim(),
       description: '',
       status: 'open',
@@ -72,6 +72,10 @@ export function TaskDetailPanel({ task, onClose, onEdit, onDelete, onSelectTask 
     });
     setChildTitle('');
     setShowAddChild(false);
+    // 생성 후 바로 하위 이슈 상세로 이동
+    if (newChild && onSelectTask) {
+      onSelectTask(newChild);
+    }
   };
 
   const handleLinkParent = async (parentId: string) => {

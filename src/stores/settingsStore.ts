@@ -34,6 +34,15 @@ const DEFAULT_CATEGORIES: CategoryItem[] = [
   { id: '7', name: '개인/행정', color: '#6b7280' },
 ];
 
+export interface CustomNavItem {
+  id: string;
+  label: string;
+  path: string;
+  icon: string;
+  visible: boolean;
+  notes?: string; // JSON stringified notes array
+}
+
 interface SettingsStore {
   theme: Theme;
   sidebarCollapsed: boolean;
@@ -41,6 +50,8 @@ interface SettingsStore {
   categories: CategoryItem[];
   routines: RoutineItem[];
   templates: TemplateItem[];
+  navOrder: string[]; // ordered path list e.g. ['/', '/today', ...]
+  customPages: CustomNavItem[];
   setTheme: (theme: Theme) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -53,6 +64,10 @@ interface SettingsStore {
   deleteRoutine: (id: string) => void;
   toggleRoutine: (id: string) => void;
   setTemplates: (templates: TemplateItem[]) => void;
+  setNavOrder: (order: string[]) => void;
+  addCustomPage: (label: string, icon: string) => void;
+  removeCustomPage: (id: string) => void;
+  updateCustomPage: (id: string, updates: Partial<Omit<CustomNavItem, 'id'>>) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -64,6 +79,8 @@ export const useSettingsStore = create<SettingsStore>()(
       categories: DEFAULT_CATEGORIES,
       routines: [],
       templates: [],
+      navOrder: [],
+      customPages: [],
       setTheme: (theme) => set({ theme }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -93,6 +110,21 @@ export const useSettingsStore = create<SettingsStore>()(
           routines: s.routines.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)),
         })),
       setTemplates: (templates) => set({ templates }),
+      setNavOrder: (navOrder) => set({ navOrder }),
+      addCustomPage: (label, icon) =>
+        set((s) => {
+          const id = crypto.randomUUID();
+          const path = `/custom/${id}`;
+          return {
+            customPages: [...s.customPages, { id, label, path, icon, visible: true }],
+          };
+        }),
+      removeCustomPage: (id) =>
+        set((s) => ({ customPages: s.customPages.filter((p) => p.id !== id) })),
+      updateCustomPage: (id, updates) =>
+        set((s) => ({
+          customPages: s.customPages.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+        })),
     }),
     { name: 'daily-planner-settings' },
   ),

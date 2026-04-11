@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
-import { Download, Upload, Trash2, Moon, Sun, Monitor, Plus, Edit2, X, Check, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Download, Upload, Trash2, Moon, Sun, Monitor, Plus, Edit2, X, Check, ToggleLeft, ToggleRight, FileSpreadsheet, Database } from 'lucide-react';
 import { useSettingsStore, type CategoryItem } from '@/stores/settingsStore';
 import { useTaskStore } from '@/stores/taskStore';
 import { useDailyLogStore } from '@/stores/dailyLogStore';
 import { exportAllData, importAllData, clearAllData, downloadJson } from '@/lib/export';
+import { forceLoadSeedData, importFromExcel } from '@/lib/seed';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { cn } from '@/lib/utils';
 import type { Theme } from '@/types/settings';
@@ -34,7 +35,10 @@ export function SettingsPage() {
   const loadEntries = useDailyLogStore((s) => s.loadEntries);
 
   const [clearOpen, setClearOpen] = useState(false);
+  const [seedOpen, setSeedOpen] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [importingExcel, setImportingExcel] = useState(false);
+  const excelRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -345,6 +349,53 @@ export function SettingsPage() {
       </section>
 
       {/* Data Management */}
+      {/* Excel Import */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">엑셀 가져오기</h2>
+        <p className="text-sm text-muted-foreground">
+          엑셀 파일(.xlsx)의 업무일지 시트를 파싱하여 업무로 추가합니다.
+        </p>
+        <div className="space-y-3">
+          <button
+            onClick={() => excelRef.current?.click()}
+            disabled={importingExcel}
+            className="flex w-full items-center gap-3 rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+          >
+            <FileSpreadsheet size={18} />
+            {importingExcel ? '가져오는 중...' : '엑셀 파일 업로드 (.xlsx)'}
+          </button>
+          <input
+            ref={excelRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setImportingExcel(true);
+              try {
+                const count = await importFromExcel(file);
+                await loadTasks();
+                setMessage({ type: 'success', text: `엑셀에서 ${count}개 업무를 가져왔습니다.` });
+              } catch (err) {
+                setMessage({ type: 'error', text: err instanceof Error ? err.message : '엑셀 가져오기 실패' });
+              } finally {
+                setImportingExcel(false);
+                if (excelRef.current) excelRef.current.value = '';
+              }
+            }}
+            className="hidden"
+          />
+          <button
+            onClick={() => setSeedOpen(true)}
+            className="flex w-full items-center gap-3 rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
+          >
+            <Database size={18} />
+            샘플 데이터 로드 (기존 데이터 초기화)
+          </button>
+        </div>
+      </section>
+
+      {/* Data Management */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">데이터 관리</h2>
         <div className="space-y-3">
@@ -407,6 +458,25 @@ export function SettingsPage() {
         title="루틴 삭제"
         description="이 루틴을 삭제하시겠습니까?"
         confirmLabel="삭제"
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={seedOpen}
+        onClose={() => setSeedOpen(false)}
+        onConfirm={async () => {
+          try {
+            const count = await forceLoadSeedData();
+            await loadTasks();
+            setMessage({ type: 'success', text: `샘플 데이터 ${count}개를 로드했습니다. (기존 업무 초기화됨)` });
+          } catch {
+            setMessage({ type: 'error', text: '샘플 데이터 로드에 실패했습니다.' });
+          }
+          setSeedOpen(false);
+        }}
+        title="샘플 데이터 로드"
+        description="기존 업무를 모두 삭제하고 엑셀 업무일지 샘플 데이터(21개)를 로드합니다. 계속하시겠습니까?"
+        confirmLabel="로드"
         variant="destructive"
       />
     </div>
